@@ -1,14 +1,23 @@
 import tkinter as tk
 from PIL import Image, ImageTk
 from typing import Callable, Optional, List
+import sys
+import os
 
 class NotificationWindow(tk.Toplevel):
     """
     A custom tkinter Toplevel window to display notifications.
     It can show either an animated GIF or a text message.
     """
+    # Class-level constants for timing configuration
+    close_after_3_attempts_seconds: int = 10  # Time window stays open after 3 dismissals
+    auto_close_seconds: int = 5  # Time before auto-closing any notification
 
-    def __init__(self, on_close: Callable[[], None], message: Optional[str] = None) -> None:
+    def __init__(
+            self, on_close: Callable[[], None],
+            message: Optional[str] = None ,
+            ) -> None:
+        
         """
         Initializes the notification window.
 
@@ -17,16 +26,43 @@ class NotificationWindow(tk.Toplevel):
             message (Optional[str], optional): A text message to display instead of the GIF. Defaults to None.
         """
         super().__init__()
+        if message:
+            label = tk.Label(self, text=message, font=("Arial", 12), wraplength=380, justify="center")
+            label.pack(pady=20, padx=10, expand=True)
+        else:
+            # Get correct path whether running as script or frozen exe
+            if getattr(sys, 'frozen', False):
+                # Running as compiled exe
+                base_path = sys._MEIPASS
+            else:
+                # Running as script
+                base_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+            
+            self.gif_path = os.path.join(base_path, 'assets', 'exercise.gif')
+            self.gif = Image.open(self.gif_path)
+
         self.on_close: Callable[[], None] = on_close
 
         # --- Window Configuration ---
-        self.title("Time for a break!")
+        self.title("زمان نرمش فرا رسیده است!")
         self.geometry("400x400")
         self.resizable(False, False)
         # Always keep the window on top of others
         self.attributes("-topmost", True)
-        # Set the action for when the user clicks the window's close ('X') button
-        self.protocol("WM_DELETE_WINDOW", self._handle_user_close)
+
+        if message:
+            self.overrideredirect(True)  # Removes window decorations including close button
+        else:
+            self.protocol("WM_DELETE_WINDOW", self._handle_user_close)
+
+        # Position window at bottom right of screen
+        self._position_bottom_right()
+
+        # Enable the close button after 7 seconds
+        self.after(10000, self.enable_close_button)
+
+        # Schedule the window to close automatically using the new constant
+        self.after(self.auto_close_seconds * 1000, self.auto_close)
 
         # --- Content ---
         if message:
@@ -44,12 +80,12 @@ class NotificationWindow(tk.Toplevel):
                 self.frames.append(ImageTk.PhotoImage(self.gif.copy()))
 
             self.gif_label: tk.Label = tk.Label(self)
-            self.gif_label.pack(pady=10, expand=True)
+            self.gif_label.pack(pady=15, expand=True)
             self.frame_index: int = 0
             self.animate()
 
         # --- Close Button ---
-        self.close_button: tk.Button = tk.Button(self, text="Close", command=self._handle_user_close, state=tk.DISABLED)
+        self.close_button: tk.Button = tk.Button(self, text="بستن", command=self._handle_user_close, state=tk.DISABLED)
         self.close_button.pack(pady=10)
 
         # Enable the close button after 7 seconds
@@ -59,11 +95,11 @@ class NotificationWindow(tk.Toplevel):
 
     def auto_close(self) -> None:
         """
-        Closes the window automatically without triggering the user-close callback.
+        Handles automatic window closing.
         """
-        # We need to check if the window still exists before trying to destroy it,
-        # as the user might have closed it manually just before this method is called.
         if self.winfo_exists():
+            if self.on_close:
+                self.on_close(is_user_close=False)  # Add flag to indicate auto-close
             self.destroy()
 
     def animate(self) -> None:
@@ -85,14 +121,31 @@ class NotificationWindow(tk.Toplevel):
 
     def _handle_user_close(self) -> None:
         """
-        Handles the user-initiated close event from either the 'Close' button or the window's 'X' button.
-        This method calls the provided on_close callback and then destroys the window.
+        Handles when user explicitly closes the window.
         """
-        # Check if a callback was provided and call it
         if self.on_close:
-            self.on_close()
-        # Destroy the tkinter window
+            self.on_close(is_user_close=True)  # Add flag to indicate user closed it
         self.destroy()
+
+    def _position_bottom_right(self) -> None:
+        """
+        Positions the window at the bottom right of the screen.
+        """
+        # Get screen width and height
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        
+        # Get window size
+        window_width = 400
+        window_height = 400
+        
+        # Calculate position
+        x_position = screen_width - window_width - 20  # 20px padding from right
+        y_position = screen_height - window_height - 40  # 40px padding from bottom
+        
+        # Set window position
+        self.geometry(f"+{x_position}+{y_position}")
+
 
 if __name__ == '__main__':
     # This block demonstrates how to use the NotificationWindow.
@@ -106,12 +159,6 @@ if __name__ == '__main__':
 
     print("Showing notification with GIF...")
     notification_gif = NotificationWindow(on_close=on_close_callback)
-
-    # The mainloop call below will block until the window is closed.
-    # To test the message window, you would comment out the one above.
-    # print("Showing notification with a message...")
-    # message = "شما 3 بار ورزش را نادیده گرفتید، لطفا به سلامت خود بیشتر اهمیت دهید"
-    # notification_msg = NotificationWindow(on_close=on_close_callback, message=message)
 
     root.mainloop()
     print("Window closed, program finished.")
