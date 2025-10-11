@@ -116,7 +116,7 @@ namespace Ergonomy.UI
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(274, 216); // The size of the window's client area.
+            this.ClientSize = new System.Drawing.Size(300, 240); // Increased size for better layout.
             this.Controls.Add(this.pictureBox1); // Add the picture box to the form.
             this.Controls.Add(this.label1); // Add the label to the form.
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow; // A simple window border with a close button.

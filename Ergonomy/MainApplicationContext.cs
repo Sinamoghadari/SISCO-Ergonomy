@@ -152,8 +152,8 @@ namespace Ergonomy
                     // Reset the flag because the alarm is now closed.
                     _isAlarmActive = false;
                 };
-                // Show the secondary alarm as a dialog, which blocks interaction with other windows.
-                secondaryAlarm.ShowDialog();
+                // Show the secondary alarm.
+                secondaryAlarm.Show();
             }
         }
 
