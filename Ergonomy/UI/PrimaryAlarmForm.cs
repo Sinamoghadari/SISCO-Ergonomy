@@ -44,28 +44,33 @@ namespace Ergonomy.UI
         // This flag tracks whether the form was closed by the user clicking the 'X' button.
         private bool _isUserClose = false;
 
-        // This method is called just before the form closes.
+        // This method is called just before the form closes. It's the key to the alarm logic.
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            // Check if the reason for closing is the user clicking the 'X' button.
+            // We check the 'CloseReason'. This tells us HOW the close was initiated.
+            // If the user clicks the 'X' button, the reason will be 'UserClosing'.
+            // If the '.Close()' method is called by our code (e.g., from the auto-close timer),
+            // the reason will be 'None'.
             if (e.CloseReason == CloseReason.UserClosing)
             {
-                // If so, set our flag to true.
+                // Because the user clicked the 'X', we set our flag to true.
+                // This is the ONLY time this flag will be set to true.
                 _isUserClose = true;
             }
-            // Call the base method to continue the closing process.
+            // Call the base method to allow the form to continue closing.
             base.OnFormClosing(e);
         }
 
-        // This method is called after the form has closed.
+        // This method is called after the form has finished closing.
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
-            // Stop the auto-close timer to prevent it from running unnecessarily.
+            // Stop the auto-close timer to prevent it from running in the background.
             _autoCloseTimer.Stop();
             // Release the resources used by the timer.
             _autoCloseTimer.Dispose();
-            // Invoke the callback event, passing the value of our flag.
-            // This tells the MainApplicationContext whether the user closed the window or not.
+            // Invoke the callback event, passing the final value of our flag.
+            // If the user clicked 'X', this sends 'true'.
+            // If the timer closed the form, this sends 'false'.
             FormClosedCallback?.Invoke(_isUserClose);
             // Call the base method to complete the form closing logic.
             base.OnFormClosed(e);
@@ -99,7 +104,18 @@ namespace Ergonomy.UI
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage; // The image will stretch to fit the box.
             this.pictureBox1.TabIndex = 1;
             this.pictureBox1.TabStop = false;
-            this.pictureBox1.Image = Image.FromFile("assets/exercise.gif"); // Load the GIF from the assets folder.
+            // Find all .gif files in the assets directory.
+            var gifFiles = System.IO.Directory.GetFiles("assets", "*.gif");
+            // Check if any GIF files were found to avoid errors.
+            if (gifFiles.Length > 0)
+            {
+                // Create a single Random instance to ensure good randomness.
+                var random = new Random();
+                // Select a random file path from the array of found files.
+                var randomGifPath = gifFiles[random.Next(gifFiles.Length)];
+                // Load the randomly selected image into the picture box.
+                this.pictureBox1.Image = Image.FromFile(randomGifPath);
+            }
             //
             // PrimaryAlarmForm: The main form itself.
             //
