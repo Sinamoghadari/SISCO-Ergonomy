@@ -123,14 +123,17 @@ namespace Ergonomy
                 var primaryAlarm = new PrimaryAlarmForm(_appSettings);
                 // Set up a callback that runs when the form is closed.
                 primaryAlarm.FormClosedCallback += (isUserClose) => {
+                    // --- DIAGNOSTIC LOG ---
+                    Console.WriteLine($"DIAGNOSTIC: Callback received. isUserClose = {isUserClose}. Current session counter = {_sessionCloseCounter}");
+
                     // This is the crucial part of the logic.
-                    // The 'isUserClose' boolean comes from the PrimaryAlarmForm.
-                    // It will ONLY be true if the OnFormClosing method detected a CloseReason of 'UserClosing'.
                     if (isUserClose)
                     {
                         // Therefore, this counter only increments on a manual user close.
                         _sessionCloseCounter++;
                         _totalCloseCounter++;
+                        // --- DIAGNOSTIC LOG ---
+                        Console.WriteLine($"DIAGNOSTIC: User closed form. New session counter = {_sessionCloseCounter}");
                     }
                     // Reset the flag because the alarm is now closed, allowing a new one to appear later.
                     _isAlarmActive = false;

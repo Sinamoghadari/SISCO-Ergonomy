@@ -47,10 +47,13 @@ namespace Ergonomy.UI
         // This method is called just before the form closes. It's the key to the alarm logic.
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
+            // --- DIAGNOSTIC LOG ---
+            // Log the reason the form is closing. This is crucial for debugging the alarm logic.
+            // 'UserClosing' means the user clicked the 'X' button.
+            // 'None' (or others) means it was closed programmatically, e.g., by our timer.
+            Console.WriteLine($"DIAGNOSTIC: PrimaryAlarmForm closing with reason: {e.CloseReason}");
+
             // We check the 'CloseReason'. This tells us HOW the close was initiated.
-            // If the user clicks the 'X' button, the reason will be 'UserClosing'.
-            // If the '.Close()' method is called by our code (e.g., from the auto-close timer),
-            // the reason will be 'None'.
             if (e.CloseReason == CloseReason.UserClosing)
             {
                 // Because the user clicked the 'X', we set our flag to true.
@@ -104,17 +107,22 @@ namespace Ergonomy.UI
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage; // The image will stretch to fit the box.
             this.pictureBox1.TabIndex = 1;
             this.pictureBox1.TabStop = false;
-            // Find all .gif files in the assets directory.
-            var gifFiles = System.IO.Directory.GetFiles("assets", "*.gif");
-            // Check if any GIF files were found to avoid errors.
-            if (gifFiles.Length > 0)
+            // Create a list to hold all found image files.
+            var imageFiles = new System.Collections.Generic.List<string>();
+            // Find all .png files in the assets directory and add them to the list.
+            imageFiles.AddRange(System.IO.Directory.GetFiles("assets", "*.png"));
+            // Find all .gif files in the assets directory and add them to the list.
+            imageFiles.AddRange(System.IO.Directory.GetFiles("assets", "*.gif"));
+
+            // Check if any image files were found to avoid errors.
+            if (imageFiles.Count > 0)
             {
                 // Create a single Random instance to ensure good randomness.
                 var random = new Random();
-                // Select a random file path from the array of found files.
-                var randomGifPath = gifFiles[random.Next(gifFiles.Length)];
+                // Select a random file path from the list of found files.
+                var randomImagePath = imageFiles[random.Next(imageFiles.Count)];
                 // Load the randomly selected image into the picture box.
-                this.pictureBox1.Image = Image.FromFile(randomGifPath);
+                this.pictureBox1.Image = Image.FromFile(randomImagePath);
             }
             //
             // PrimaryAlarmForm: The main form itself.
