@@ -15,8 +15,8 @@ namespace Ergonomy.UI
         // This timer is used to automatically close the window 7 seconds after it becomes closable.
         private System.Windows.Forms.Timer _autoCloseTimer;
 
-        // This is the constructor. It runs when a new SecondaryAlarmForm is created.
-        public SecondaryAlarmForm()
+        // This is the constructor. It now accepts an AppSettings object.
+        public SecondaryAlarmForm(AppSettings settings)
         {
             // This method creates and configures the controls on the form.
             InitializeComponent();
@@ -27,24 +27,24 @@ namespace Ergonomy.UI
 
             // Create the timer that will re-enable the close button.
             _unclosableTimer = new System.Windows.Forms.Timer();
-            // Set its interval to 10000 milliseconds (10 seconds).
-            _unclosableTimer.Interval = 10000;
+            // Set its interval from the settings file (converted from seconds to milliseconds).
+            _unclosableTimer.Interval = settings.SecondaryAlarmUnclosableSeconds * 1000;
             // Define what happens when the timer's interval is reached.
             _unclosableTimer.Tick += (sender, e) => {
                 // Re-enable the control box, making the 'X' button visible and functional.
                 this.ControlBox = true;
                 // Stop this timer so it doesn't run again.
                 _unclosableTimer.Stop();
-                // Start the second timer, which will auto-close the window after another 7 seconds.
+                // Start the second timer, which will auto-close the window after another set duration.
                 _autoCloseTimer.Start();
             };
-            // Start the 10-second unclosable timer.
+            // Start the unclosable timer.
             _unclosableTimer.Start();
 
             // Create the timer that will automatically close the window.
             _autoCloseTimer = new System.Windows.Forms.Timer();
-            // Set its interval to 7000 milliseconds (7 seconds).
-            _autoCloseTimer.Interval = 7000;
+            // Set its interval from the settings file (converted from seconds to milliseconds).
+            _autoCloseTimer.Interval = settings.SecondaryAlarmAutoCloseSeconds * 1000;
             // Define what happens when this timer's interval is reached.
             _autoCloseTimer.Tick += (sender, e) => {
                 // Close the form.

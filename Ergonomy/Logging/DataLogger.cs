@@ -20,7 +20,7 @@ namespace Ergonomy.Logging
         private Func<int> _getTotalCloseCounter;
 
         // This is the constructor. It's called when a new DataLogger is created.
-        public DataLogger(ActivityMonitor activityMonitor, Func<int> getTotalCloseCounter)
+        public DataLogger(ActivityMonitor activityMonitor, Func<int> getTotalCloseCounter, AppSettings settings)
         {
             // Store the provided ActivityMonitor object.
             _activityMonitor = activityMonitor;
@@ -28,8 +28,8 @@ namespace Ergonomy.Logging
             _getTotalCloseCounter = getTotalCloseCounter;
 
             // Create a new Timer object.
-            // 3600000 milliseconds = 1 hour.
-            _logTimer = new System.Timers.Timer(3600000);
+            // Convert the logging interval from hours (in settings) to milliseconds.
+            _logTimer = new System.Timers.Timer(settings.LoggingIntervalHours * 60 * 60 * 1000);
             // Tell the timer to call the OnLogTimerElapsed method every time it fires.
             _logTimer.Elapsed += OnLogTimerElapsed;
         }

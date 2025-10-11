@@ -1,7 +1,9 @@
 // Import necessary namespaces for logging, UI, system functions, and Windows Forms.
 using Ergonomy.Logging;
 using Ergonomy.UI;
+using Microsoft.Extensions.Configuration;
 using System;
+using System.IO;
 using System.Windows.Forms;
 
 // Define the main namespace for the application.
@@ -11,6 +13,8 @@ namespace Ergonomy
     // It inherits from ApplicationContext, which is ideal for background applications.
     public class MainApplicationContext : ApplicationContext
     {
+        // This property will hold all the loaded application settings.
+        private AppSettings _appSettings;
         // This object is responsible for monitoring keyboard and mouse activity.
         private ActivityMonitor _activityMonitor;
         // This object handles logging the activity data to an Excel file.
@@ -29,14 +33,17 @@ namespace Ergonomy
         // This is the constructor. It runs once when the application starts.
         public MainApplicationContext()
         {
+            // Load the application settings from the JSON file first.
+            LoadAppSettings();
+
             // Create a new ActivityMonitor object.
             _activityMonitor = new ActivityMonitor();
             // Start monitoring for keyboard and mouse activity.
             _activityMonitor.Start();
 
             // Create a new DataLogger object.
-            // It needs the activity monitor to get data and a function to get the total close count.
-            _dataLogger = new DataLogger(_activityMonitor, () => _totalCloseCounter);
+            // It needs the activity monitor to get data, a function to get the total close count, and the app settings.
+            _dataLogger = new DataLogger(_activityMonitor, () => _totalCloseCounter, _appSettings);
             // Start the hourly logging timer.
             _dataLogger.Start();
 
@@ -63,6 +70,25 @@ namespace Ergonomy
             _notifyIcon.ContextMenuStrip.Items.Add("Exit", null, OnExit);
         }
 
+        // This method builds the configuration from the appsettings.json file.
+        private void LoadAppSettings()
+        {
+            // Create a new configuration builder.
+            var builder = new ConfigurationBuilder()
+                // Set the base path to the application's directory.
+                .SetBasePath(Directory.GetCurrentDirectory())
+                // Add the appsettings.json file as a source.
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
+            // Build the configuration.
+            IConfigurationRoot configuration = builder.Build();
+
+            // Create a new instance of our AppSettings class.
+            _appSettings = new AppSettings();
+            // Bind the "AppSettings" section of the JSON file to our AppSettings object.
+            configuration.GetSection("AppSettings").Bind(_appSettings);
+        }
+
         // This method is called every second by the _activityTimer.
         private void OnActivityTimerTick(object sender, EventArgs e)
         {
@@ -74,8 +100,8 @@ namespace Ergonomy
 
             // Calculate the total combined activity time from the monitor.
             var totalActivity = _activityMonitor.AlarmKeyboardActiveTime + _activityMonitor.AlarmMouseActiveTime;
-            // If the total activity is 5 seconds or more...
-            if (totalActivity.TotalSeconds >= 5)
+            // If the total activity reaches the threshold from our settings...
+            if (totalActivity.TotalSeconds >= _appSettings.ActivityThresholdSeconds)
             {
                 // Reset the timers used for the alarm.
                 _activityMonitor.ResetAlarmTimers();
@@ -90,11 +116,11 @@ namespace Ergonomy
             // Set the flag to true so we know an alarm is active.
             _isAlarmActive = true;
 
-            // If the user has closed the primary alarm less than 3 times...
-            if (_sessionCloseCounter < 3)
+            // If the user has closed the primary alarm less than the limit from our settings...
+            if (_sessionCloseCounter < _appSettings.SessionCloseLimit)
             {
-                // Create the primary alarm window.
-                var primaryAlarm = new PrimaryAlarmForm();
+                // Create the primary alarm window, passing the settings to it.
+                var primaryAlarm = new PrimaryAlarmForm(_appSettings);
                 // Set up a callback that runs when the form is closed.
                 primaryAlarm.FormClosedCallback += (isUserClose) => {
                     // 'isUserClose' will be true if the user clicked the 'X' button.
@@ -110,10 +136,10 @@ namespace Ergonomy
                 // Show the primary alarm window.
                 primaryAlarm.Show();
             }
-            else // Otherwise (if the counter is 3 or more)...
+            else // Otherwise (if the counter is at the limit)...
             {
-                // Create the secondary (escalation) alarm window.
-                var secondaryAlarm = new SecondaryAlarmForm();
+                // Create the secondary (escalation) alarm window, passing the settings to it.
+                var secondaryAlarm = new SecondaryAlarmForm(_appSettings);
                 // Set up a callback that runs when the form is closed.
                 secondaryAlarm.FormClosed += (s, args) => {
                     // Reset the session counter back to zero.
