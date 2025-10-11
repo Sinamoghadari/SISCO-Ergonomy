@@ -20,8 +20,12 @@ namespace Ergonomy.UI
         {
             // This method creates and configures the controls on the form.
             InitializeComponent();
-            // Set the form to appear in the center of the screen.
-            this.StartPosition = FormStartPosition.CenterScreen;
+            // Set the form's starting position to be manually controlled.
+            this.StartPosition = FormStartPosition.Manual;
+            // Get the working area of the primary screen (the desktop area, excluding the taskbar).
+            Rectangle workingArea = Screen.PrimaryScreen.WorkingArea;
+            // Set the form's location to the bottom-right corner of the screen.
+            this.Location = new Point(workingArea.Right - this.Width, workingArea.Bottom - this.Height);
             // Initially, disable the entire control box (minimize, maximize, close buttons).
             this.ControlBox = false;
 
@@ -81,14 +85,42 @@ namespace Ergonomy.UI
             this.label1.RightToLeft = System.Windows.Forms.RightToLeft.Yes; // Set text direction for Farsi.
             this.label1.Size = new System.Drawing.Size(600, 84);
             this.label1.TabIndex = 0;
-            this.label1.Text = "شما 3 بار نرمش را نادیده گرفتید، این پنجره به مدت 10 ثانیه قابلیت بسته شدن ندارد";
+            this.label1.Text = "شما نرمش را نادیده گرفتید،\nاین پنجره به مدت 10 ثانیه بسته نگه داشته می شود";
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter; // Center the text within the label.
+            //
+            // pictureBox1: The control that displays the animated GIF.
+            //
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.pictureBox1.Location = new System.Drawing.Point(12, 96);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(276, 132);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage; // The image will stretch to fit the box.
+            this.pictureBox1.TabIndex = 1;
+            this.pictureBox1.TabStop = false;
+            // Create a list to hold all found image files.
+            var imageFiles = new System.Collections.Generic.List<string>();
+            // Find all .png files in the assets directory and add them to the list.
+            imageFiles.AddRange(System.IO.Directory.GetFiles("assets", "*.png"));
+            // Find all .gif files in the assets directory and add them to the list.
+            imageFiles.AddRange(System.IO.Directory.GetFiles("assets", "*.gif"));
+
+            // Check if any image files were found to avoid errors.
+            if (imageFiles.Count > 0)
+            {
+                // Create a single Random instance to ensure good randomness.
+                var random = new Random();
+                // Select a random file path from the list of found files.
+                var randomImagePath = imageFiles[random.Next(imageFiles.Count)];
+                // Load the randomly selected image into the picture box.
+                this.pictureBox1.Image = System.Drawing.Image.FromFile(randomImagePath);
+            }
             //
             // SecondaryAlarmForm: The main form itself.
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(624, 102); // The size of the window's client area.
+            this.ClientSize = new System.Drawing.Size(300, 240); // The size of the window's client area.
+            this.Controls.Add(this.pictureBox1); // Add the picture box to the form.
             this.Controls.Add(this.label1); // Add the label to the form.
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog; // A fixed dialog border.
             this.MaximizeBox = false; // Disable the maximize button.
@@ -102,5 +134,6 @@ namespace Ergonomy.UI
 
         // Declaration of the label control.
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.PictureBox pictureBox1;
     }
 }
