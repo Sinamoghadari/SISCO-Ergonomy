@@ -15,6 +15,8 @@ namespace Ergonomy.UI
         public event Action<bool> FormClosedCallback;
         // This timer is used to automatically close the window after 7 seconds.
         private System.Windows.Forms.Timer _autoCloseTimer;
+        // This flag explicitly tracks if the window was closed by the timer. This is more reliable than checking CloseReason.
+        private bool _isAutoClosing = false;
 
         // This is the constructor. It now accepts an AppSettings object.
         public PrimaryAlarmForm(AppSettings settings)
@@ -34,34 +36,14 @@ namespace Ergonomy.UI
             _autoCloseTimer.Interval = settings.PrimaryAlarmAutoCloseSeconds * 1000;
             // Define what happens when the timer's interval is reached.
             _autoCloseTimer.Tick += (sender, e) => {
-                // When the timer ticks, close the form. The FormClosing event will handle the callback.
+                // --- NEW LOGIC ---
+                // 1. Set the flag to true to indicate this is an automatic close.
+                _isAutoClosing = true;
+                // 2. Close the form.
                 this.Close();
             };
             // Start the auto-close timer.
             _autoCloseTimer.Start();
-        }
-
-        // This flag tracks whether the form was closed by the user clicking the 'X' button.
-        private bool _isUserClose = false;
-
-        // This method is called just before the form closes. It's the key to the alarm logic.
-        protected override void OnFormClosing(FormClosingEventArgs e)
-        {
-            // --- DIAGNOSTIC LOG ---
-            // Log the reason the form is closing. This is crucial for debugging the alarm logic.
-            // 'UserClosing' means the user clicked the 'X' button.
-            // 'None' (or others) means it was closed programmatically, e.g., by our timer.
-            Console.WriteLine($"DIAGNOSTIC: PrimaryAlarmForm closing with reason: {e.CloseReason}");
-
-            // We check the 'CloseReason'. This tells us HOW the close was initiated.
-            if (e.CloseReason == CloseReason.UserClosing)
-            {
-                // Because the user clicked the 'X', we set our flag to true.
-                // This is the ONLY time this flag will be set to true.
-                _isUserClose = true;
-            }
-            // Call the base method to allow the form to continue closing.
-            base.OnFormClosing(e);
         }
 
         // This method is called after the form has finished closing.
@@ -71,10 +53,15 @@ namespace Ergonomy.UI
             _autoCloseTimer.Stop();
             // Release the resources used by the timer.
             _autoCloseTimer.Dispose();
-            // Invoke the callback event, passing the final value of our flag.
-            // If the user clicked 'X', this sends 'true'.
-            // If the timer closed the form, this sends 'false'.
-            FormClosedCallback?.Invoke(_isUserClose);
+
+            // --- NEW LOGIC ---
+            // A "user close" is now defined as any close that was NOT an auto-close.
+            // We invoke the callback with the opposite of our flag.
+            // If timer closed it: _isAutoClosing is true, so we send 'false'.
+            // If user clicked 'X': _isAutoClosing is false, so we send 'true'.
+            bool isUserClose = !_isAutoClosing;
+            FormClosedCallback?.Invoke(isUserClose);
+
             // Call the base method to complete the form closing logic.
             base.OnFormClosed(e);
         }
