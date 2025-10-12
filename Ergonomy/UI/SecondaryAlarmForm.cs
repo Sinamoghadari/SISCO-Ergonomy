@@ -86,6 +86,41 @@ namespace Ergonomy.UI
             }
         }
 
+        // This method overrides the default window procedure to intercept system messages.
+        protected override void WndProc(ref Message m)
+        {
+            // Define constants for the Windows messages we need to intercept.
+            const int WM_SYSCOMMAND = 0x0112;
+            const int SC_MAXIMIZE = 0xF030;
+
+            // Check if the message is a system command and if the command is to maximize.
+            if (m.Msg == WM_SYSCOMMAND && (int)m.WParam == SC_MAXIMIZE)
+            {
+                // If it is, we handle it ourselves and do not pass it to the base class.
+
+                // Get the primary screen's dimensions.
+                Rectangle screen = Screen.PrimaryScreen.WorkingArea;
+
+                // Calculate the new size (50% of the screen's width and height).
+                int newWidth = screen.Width / 2;
+                int newHeight = screen.Height / 2;
+
+                // Calculate the new location to center the window.
+                int newX = (screen.Width - newWidth) / 2;
+                int newY = (screen.Height - newHeight) / 2;
+
+                // Apply the new size and location.
+                this.Size = new Size(newWidth, newHeight);
+                this.Location = new Point(newX, newY);
+
+                // Return here to prevent the default maximization.
+                return;
+            }
+
+            // For all other messages, pass them to the base WndProc to be handled normally.
+            base.WndProc(ref m);
+        }
+
         // This method is called after the form has closed (for any reason).
         protected override void OnFormClosed(FormClosedEventArgs e)
         {

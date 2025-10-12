@@ -61,8 +61,8 @@ namespace Ergonomy.UI
             this.ClientSize = new System.Drawing.Size(300, 240);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.label1);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            this.MaximizeBox = false;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
+            this.MaximizeBox = true;
             this.MinimizeBox = false;
             this.Name = "SecondaryAlarmForm";
             this.Text = "هشدار";
