@@ -9,13 +9,17 @@ namespace Ergonomy.UI
         public event Action<bool> FormClosedCallback;
         private System.Windows.Forms.Timer _autoCloseTimer;
         private bool _isAutoClosing = false;
+        private bool _isCustomMaximized = false;
+        private Rectangle _originalBounds;
 
         public PrimaryAlarmForm(AppSettings settings)
         {
             InitializeComponent();
             this.TopMost = true;
             this.Resize += new System.EventHandler(this.AlarmForm_Resize);
+            this.Load += new System.EventHandler(this.AlarmForm_Load);
             this.StartPosition = FormStartPosition.Manual;
+
             Rectangle workingArea = Screen.PrimaryScreen.WorkingArea;
             this.Location = new Point(workingArea.Right - this.Width, workingArea.Bottom - this.Height);
 
@@ -28,6 +32,11 @@ namespace Ergonomy.UI
                 this.Close();
             };
             _autoCloseTimer.Start();
+        }
+
+        private void AlarmForm_Load(object sender, EventArgs e)
+        {
+            _originalBounds = this.Bounds;
         }
 
         private void LoadRandomImage()
@@ -49,11 +58,20 @@ namespace Ergonomy.UI
             const int SC_MAXIMIZE = 0xF030;
             if (m.Msg == WM_SYSCOMMAND && (int)m.WParam == SC_MAXIMIZE)
             {
-                Rectangle screen = Screen.PrimaryScreen.WorkingArea;
-                int newWidth = screen.Width / 2;
-                int newHeight = screen.Height / 2;
-                this.Size = new Size(newWidth, newHeight);
-                this.Location = new Point((screen.Width - newWidth) / 2, (screen.Height - newHeight) / 2);
+                if (!_isCustomMaximized)
+                {
+                    Rectangle screen = Screen.PrimaryScreen.WorkingArea;
+                    int newWidth = screen.Width / 2;
+                    int newHeight = screen.Height / 2;
+                    this.Size = new Size(newWidth, newHeight);
+                    this.Location = new Point((screen.Width - newWidth) / 2, (screen.Height - newHeight) / 2);
+                    _isCustomMaximized = true;
+                }
+                else
+                {
+                    this.Bounds = _originalBounds;
+                    _isCustomMaximized = false;
+                }
                 return;
             }
             base.WndProc(ref m);
