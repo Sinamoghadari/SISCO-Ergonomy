@@ -9,13 +9,17 @@ namespace Ergonomy.UI
         private System.Windows.Forms.Timer _unclosableTimer;
         private System.Windows.Forms.Timer _autoCloseTimer;
         private bool _isClosable = false;
+        private bool _isCustomMaximized = false;
+        private Rectangle _originalBounds;
 
         public SecondaryAlarmForm(AppSettings settings)
         {
             InitializeComponent();
             this.TopMost = true;
             this.Resize += new System.EventHandler(this.AlarmForm_Resize);
+            this.Load += new System.EventHandler(this.AlarmForm_Load);
             this.StartPosition = FormStartPosition.Manual;
+
             Rectangle workingArea = Screen.PrimaryScreen.WorkingArea;
             this.Location = new Point(workingArea.Right - this.Width, workingArea.Bottom - this.Height);
 
@@ -35,6 +39,11 @@ namespace Ergonomy.UI
             _autoCloseTimer.Tick += (sender, e) => {
                 this.Close();
             };
+        }
+
+        private void AlarmForm_Load(object sender, EventArgs e)
+        {
+            _originalBounds = this.Bounds;
         }
 
         private void LoadRandomImage()
@@ -60,11 +69,21 @@ namespace Ergonomy.UI
             {
                 if ((int)m.WParam == SC_MAXIMIZE)
                 {
-                    Rectangle screen = Screen.PrimaryScreen.WorkingArea;
-                    int newWidth = screen.Width / 2;
-                    int newHeight = screen.Height / 2;
-                    this.Size = new Size(newWidth, newHeight);
-                    this.Location = new Point((screen.Width - newWidth) / 2, (screen.Height - newHeight) / 2);
+                    if (!_isCustomMaximized)
+                    {
+                        _originalBounds = this.Bounds;
+                        Rectangle screen = Screen.PrimaryScreen.WorkingArea;
+                        int newWidth = screen.Width / 2;
+                        int newHeight = screen.Height / 2;
+                        this.Size = new Size(newWidth, newHeight);
+                        this.Location = new Point((screen.Width - newWidth) / 2, (screen.Height - newHeight) / 2);
+                        _isCustomMaximized = true;
+                    }
+                    else
+                    {
+                        this.Bounds = _originalBounds;
+                        _isCustomMaximized = false;
+                    }
                     return;
                 }
                 if ((int)m.WParam == SC_CLOSE && !_isClosable)
