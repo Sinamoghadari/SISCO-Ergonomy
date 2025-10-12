@@ -37,8 +37,7 @@ namespace Ergonomy
             _notifyIcon.Icon = System.Drawing.SystemIcons.Application;
             _notifyIcon.Visible = true;
             _notifyIcon.Text = "Ergonomy";
-            _notifyIcon.ContextMenuStrip = new ContextMenuStrip();
-            _notifyIcon.ContextMenuStrip.Items.Add("Exit", null, OnExit);
+            // The ContextMenuStrip and its "Exit" item have been removed to prevent closing from the tray icon.
         }
 
         private void LoadAppSettings()
@@ -91,18 +90,5 @@ namespace Ergonomy
             }
         }
 
-        private void OnExit(object sender, EventArgs e)
-        {
-            ExitThread();
-        }
-
-        protected override void ExitThreadCore()
-        {
-            _notifyIcon.Visible = false;
-            _activityMonitor.Stop();
-            _dataLogger.Stop();
-            _activityTimer.Stop();
-            base.ExitThreadCore();
-        }
     }
 }
