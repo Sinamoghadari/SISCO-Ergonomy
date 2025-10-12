@@ -60,7 +60,8 @@ namespace Ergonomy.UI
             this.ClientSize = new System.Drawing.Size(300, 240);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.label1);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
+            this.MaximizeBox = true;
             this.Name = "PrimaryAlarmForm";
             this.Text = "استراحت";
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
