@@ -1,3 +1,5 @@
+using Ergonomy.Hooks;
+using Ergonomy.Logging;
 using Ergonomy.UI;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -18,11 +20,20 @@ namespace Ergonomy
         private NotifyIcon _notifyIcon;
         private List<string> _imagePaths;
         private int _currentImageIndex = 0;
+        private GlobalInputHook _globalInputHook;
+        private ActivityMonitor _activityMonitor;
+        private DataLogger _dataLogger;
 
         public MainApplicationContext()
         {
             LoadAppSettings();
             LoadImagePaths();
+
+            _globalInputHook = new GlobalInputHook();
+            _activityMonitor = new ActivityMonitor(_globalInputHook);
+            _dataLogger = new DataLogger(_activityMonitor, () => _totalCloseCounter, _appSettings);
+            _activityMonitor.Start();
+            _dataLogger.Start();
 
             _notificationTimer = new System.Windows.Forms.Timer();
             _notificationTimer.Interval = 2 * 60 * 60 * 1000; // 2 hours
@@ -104,5 +115,17 @@ namespace Ergonomy
             }
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _activityMonitor.Dispose();
+                _dataLogger.Dispose();
+                _globalInputHook.Dispose();
+                _notificationTimer.Dispose();
+                _notifyIcon.Dispose();
+            }
+            base.Dispose(disposing);
+        }
     }
 }
