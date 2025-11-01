@@ -12,7 +12,7 @@ namespace Ergonomy.UI
         private bool _isCustomMaximized = false;
         private Rectangle _originalBounds;
 
-        public PrimaryAlarmForm(AppSettings settings)
+        public PrimaryAlarmForm(AppSettings settings, string imagePath)
         {
             InitializeComponent();
             this.TopMost = true;
@@ -23,7 +23,7 @@ namespace Ergonomy.UI
             Rectangle workingArea = Screen.PrimaryScreen.WorkingArea;
             this.Location = new Point(workingArea.Right - this.Width, workingArea.Bottom - this.Height);
 
-            LoadRandomImage();
+            LoadImage(imagePath);
 
             _autoCloseTimer = new System.Windows.Forms.Timer();
             _autoCloseTimer.Interval = settings.PrimaryAlarmAutoCloseSeconds * 1000;
@@ -39,16 +39,11 @@ namespace Ergonomy.UI
             _originalBounds = this.Bounds;
         }
 
-        private void LoadRandomImage()
+        private void LoadImage(string imagePath)
         {
-            var imageFiles = new System.Collections.Generic.List<string>();
-            imageFiles.AddRange(System.IO.Directory.GetFiles("assets", "*.png"));
-            imageFiles.AddRange(System.IO.Directory.GetFiles("assets", "*.gif"));
-            if (imageFiles.Count > 0)
+            if (!string.IsNullOrEmpty(imagePath) && System.IO.File.Exists(imagePath))
             {
-                var random = new Random();
-                var randomImagePath = imageFiles[random.Next(imageFiles.Count)];
-                this.pictureBox1.Image = Image.FromFile(randomImagePath);
+                this.pictureBox1.Image = Image.FromFile(imagePath);
             }
         }
 
