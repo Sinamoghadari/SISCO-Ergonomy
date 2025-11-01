@@ -36,7 +36,7 @@ namespace Ergonomy
             _dataLogger.Start();
 
             _notificationTimer = new System.Windows.Forms.Timer();
-            _notificationTimer.Interval = 2 * 60 * 60 * 1000; // 2 hours
+            _notificationTimer.Interval = _appSettings.NotificationIntervalSeconds * 1000;
             _notificationTimer.Tick += OnNotificationTimerTick;
             _notificationTimer.Start();
 
