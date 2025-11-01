@@ -1,3 +1,0 @@
-pynput
-Pillow
-pyinstaller
