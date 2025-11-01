@@ -6,6 +6,7 @@ namespace Ergonomy
     // This allows the configuration system to automatically map the JSON values to these properties.
     public class AppSettings
     {
+        public int NotificationIntervalSeconds { get; set; }
         // The number of seconds of continuous activity required to trigger the primary alarm.
         public int ActivityThresholdSeconds { get; set; }
 
