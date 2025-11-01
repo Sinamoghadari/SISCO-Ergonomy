@@ -1,8 +1,9 @@
-using Ergonomy.Logging;
 using Ergonomy.UI;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace Ergonomy
@@ -10,28 +11,23 @@ namespace Ergonomy
     public class MainApplicationContext : ApplicationContext
     {
         private AppSettings _appSettings;
-        private ActivityMonitor _activityMonitor;
-        private DataLogger _dataLogger;
-        private System.Windows.Forms.Timer _activityTimer;
+        private System.Windows.Forms.Timer _notificationTimer;
         private int _sessionCloseCounter = 0;
         private int _totalCloseCounter = 0;
         private bool _isAlarmActive = false;
         private NotifyIcon _notifyIcon;
+        private List<string> _imagePaths;
+        private int _currentImageIndex = 0;
 
         public MainApplicationContext()
         {
             LoadAppSettings();
+            LoadImagePaths();
 
-            _activityMonitor = new ActivityMonitor();
-            _activityMonitor.Start();
-
-            _dataLogger = new DataLogger(_activityMonitor, () => _totalCloseCounter, _appSettings);
-            _dataLogger.Start();
-
-            _activityTimer = new System.Windows.Forms.Timer();
-            _activityTimer.Interval = 1000;
-            _activityTimer.Tick += OnActivityTimerTick;
-            _activityTimer.Start();
+            _notificationTimer = new System.Windows.Forms.Timer();
+            _notificationTimer.Interval = 2 * 60 * 60 * 1000; // 2 hours
+            _notificationTimer.Tick += OnNotificationTimerTick;
+            _notificationTimer.Start();
 
             _notifyIcon = new NotifyIcon();
             _notifyIcon.Icon = System.Drawing.SystemIcons.Application;
@@ -50,25 +46,43 @@ namespace Ergonomy
             configuration.GetSection("AppSettings").Bind(_appSettings);
         }
 
-        private void OnActivityTimerTick(object sender, EventArgs e)
+        private void LoadImagePaths()
+        {
+            var assetsPath = Path.Combine(Directory.GetCurrentDirectory(), "assets");
+            if (Directory.Exists(assetsPath))
+            {
+                _imagePaths = Directory.GetFiles(assetsPath, "*.png")
+                    .Concat(Directory.GetFiles(assetsPath, "*.gif"))
+                    .OrderBy(f => int.Parse(Path.GetFileNameWithoutExtension(f)))
+                    .ToList();
+            }
+            else
+            {
+                _imagePaths = new List<string>();
+            }
+        }
+
+        private void OnNotificationTimerTick(object sender, EventArgs e)
         {
             if (_isAlarmActive) return;
 
-            var totalActivity = _activityMonitor.AlarmKeyboardActiveTime + _activityMonitor.AlarmMouseActiveTime;
-            if (totalActivity.TotalSeconds >= _appSettings.ActivityThresholdSeconds)
-            {
-                _activityMonitor.ResetAlarmTimers();
-                ShowAlarm();
-            }
+            ShowAlarm();
         }
 
         private void ShowAlarm()
         {
             _isAlarmActive = true;
 
+            string imagePath = null;
+            if (_imagePaths.Count > 0)
+            {
+                imagePath = _imagePaths[_currentImageIndex];
+                _currentImageIndex = (_currentImageIndex + 1) % _imagePaths.Count;
+            }
+
             if (_sessionCloseCounter < _appSettings.SessionCloseLimit)
             {
-                var primaryAlarm = new PrimaryAlarmForm(_appSettings);
+                var primaryAlarm = new PrimaryAlarmForm(_appSettings, imagePath);
                 primaryAlarm.FormClosedCallback += (isUserClose) => {
                     if (isUserClose)
                     {
