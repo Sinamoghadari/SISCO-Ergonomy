@@ -1,3 +1,9 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using System;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
 namespace Ergonomy
 {
     internal static class Program
@@ -6,10 +12,25 @@ namespace Ergonomy
         ///  The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        static async Task Main(string[] args)
         {
-            ApplicationConfiguration.Initialize();
-            Application.Run(new MainApplicationContext());
+            if (args.Length == 0)
+            {
+                await CreateHostBuilder(args).Build().RunAsync();
+            }
+            else
+            {
+                ApplicationConfiguration.Initialize();
+                Application.Run(new MainApplicationContext(args));
+            }
         }
+
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .UseWindowsService()
+                .ConfigureServices((hostContext, services) =>
+                {
+                    services.AddHostedService<ErgonomyService>();
+                });
     }
 }
