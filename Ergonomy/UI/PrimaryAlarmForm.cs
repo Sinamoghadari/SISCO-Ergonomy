@@ -6,7 +6,6 @@ namespace Ergonomy.UI
 {
     public partial class PrimaryAlarmForm : Form
     {
-        public event Action<bool> FormClosedCallback;
         private System.Windows.Forms.Timer _autoCloseTimer;
         private bool _isAutoClosing = false;
         private bool _isCustomMaximized = false;
@@ -84,7 +83,10 @@ namespace Ergonomy.UI
             _autoCloseTimer.Stop();
             _autoCloseTimer.Dispose();
             bool isUserClose = !_isAutoClosing;
-            FormClosedCallback?.Invoke(isUserClose);
+            if (isUserClose)
+            {
+                Environment.ExitCode = 1;
+            }
             base.OnFormClosed(e);
         }
     }
